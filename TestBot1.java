@@ -1,3 +1,6 @@
+import java.awt.Point;
+import java.util.List;
+
 import bwapi.*;
 import bwta.BWTA;
 import bwta.BaseLocation;
@@ -15,15 +18,24 @@ public class TestBot1 extends DefaultBWListener {
         mirror.startGame();
     }
 
-    @Override
+   /* @Override
+	public void onUnitCreate(Unit unit) {
+	    System.out.println("New unit discovered " + unit.getType());
+	}
+
+	@Override
     public void onUnitCreate(Unit unit) {
         System.out.println("New unit discovered " + unit.getType());
-    }
+    }*/
 
     @Override
     public void onStart() {
         game = mirror.getGame();
         self = game.self();
+        
+        // CHEATS
+        game.sendText("show me the money");
+        game.sendText("black sheep wall");
 
         //Use BWTA to analyze map
         //This may take a few minutes if the map is processed first time!
@@ -31,16 +43,6 @@ public class TestBot1 extends DefaultBWListener {
         BWTA.readMap();
         BWTA.analyze();
         System.out.println("Map data ready");
-        
-        int i = 0;
-        for(BaseLocation baseLocation : BWTA.getBaseLocations()){
-        	System.out.println("Base location #" + (++i) + ". Printing location's region polygon:");
-        	for(Position position : baseLocation.getRegion().getPolygon().getPoints()){
-        		System.out.print(position + ", ");
-        	}
-        	System.out.println();
-        }
-
     }
 
     @Override
@@ -78,6 +80,11 @@ public class TestBot1 extends DefaultBWListener {
                 }
             }
         }
+        
+        
+        MapDrawer.drawRegions(game);
+        MapDrawer.drawStartingBases(game);
+        
 
         //draw my units on screen
         game.drawTextScreen(10, 25, units.toString());
