@@ -15,10 +15,6 @@ public class MapDrawer {
         	List<Position> points = region.getPolygon().getPoints();
         	
         	for (int i = 0; i < points.size() - 1; i++) {
-        		
-        		System.out.println("" + points.get(i).getX() + " " + points.get(i).getY());
-        		System.out.println("" + points.get(i + 1).getX() + " " + points.get(i + 1).getY());
-        		
         		game.drawLineMap(points.get(i).getX(), points.get(i).getY(), points.get(i + 1).getX(), points.get(i + 1).getY(), Color.Green);
         	}
         }
@@ -33,8 +29,10 @@ public class MapDrawer {
 				int top = base.getY() + UnitType.Terran_Command_Center.dimensionUp();
 				int bottom = base.getY() - UnitType.Terran_Command_Center.dimensionDown();
 				
-				Position leftTop = new Position(left, top);
-				Position rightBottom = new Position(right, bottom);
+				Position leftTop = new Position(left, bottom);
+				Position rightBottom = new Position(right, top);
+				
+				System.out.println(base.toString());
 				
 				game.drawBoxMap(leftTop, rightBottom, Color.Blue);			
 			}
