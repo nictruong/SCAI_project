@@ -10,6 +10,8 @@ import bwta.BWTA;
 import bwta.BaseLocation;
 
 public class MapDrawer {
+
+	
 	public static void drawRegions(Game game) {
 		for(bwta.Region region : BWTA.getRegions()) {
         	List<Position> points = region.getPolygon().getPoints();
@@ -31,8 +33,6 @@ public class MapDrawer {
 				
 				Position leftTop = new Position(left, bottom);
 				Position rightBottom = new Position(right, top);
-				
-				System.out.println(base.toString());
 				
 				game.drawBoxMap(leftTop, rightBottom, Color.Blue);			
 			}

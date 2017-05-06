@@ -51,6 +51,8 @@ public class TestBot1 extends DefaultBWListener {
         game.drawTextScreen(10, 10, "Playing as " + self.getName() + " - " + self.getRace());
 
         StringBuilder units = new StringBuilder("My units:\n");
+        
+        Workers.buildOrder(self, game);
 
         //iterate through my units
         for (Unit myUnit : self.getUnits()) {
@@ -80,7 +82,6 @@ public class TestBot1 extends DefaultBWListener {
                 }
             }
         }
-        
         
         MapDrawer.drawRegions(game);
         MapDrawer.drawStartingBases(game);
