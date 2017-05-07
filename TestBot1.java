@@ -34,7 +34,6 @@ public class TestBot1 extends DefaultBWListener {
         self = game.self();
         
         // CHEATS
-        game.sendText("show me the money");
         game.sendText("black sheep wall");
 
         //Use BWTA to analyze map
@@ -60,7 +59,7 @@ public class TestBot1 extends DefaultBWListener {
             units.append(myUnit.getType()).append(" ").append(myUnit.getTilePosition()).append("\n");
 
             //if there's enough minerals, train an SCV
-            if (myUnit.getType() == UnitType.Terran_Command_Center && self.minerals() >= 50) {
+            if (myUnit.getType() == UnitType.Terran_Command_Center && self.minerals() >= 50 && myUnit.getTrainingQueue().size() == 0) {
                 myUnit.train(UnitType.Terran_SCV);
             }
 
@@ -81,7 +80,7 @@ public class TestBot1 extends DefaultBWListener {
                 if (closestMineral != null) {
                     myUnit.gather(closestMineral, false);
                 }
-            }
+            }            
         }
         
         

@@ -2,12 +2,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import bwapi.Game;
+import bwapi.Order;
 import bwapi.Player;
 import bwapi.TilePosition;
 import bwapi.Unit;
 import bwapi.UnitType;
 
 public class Workers {
+	
+	private enum QueueStatus {
+		NOT_STARTED,
+		DOING,
+		COMPLETED,
+	}
 	
 	private static Workers workers = null;
 	
@@ -20,6 +27,7 @@ public class Workers {
 		private UnitType unitType;
 		private Unit builder;
 		private TilePosition location;
+		private QueueStatus status = QueueStatus.NOT_STARTED;
 		
 		public QueuedBuildingUnit(UnitType unitType, Unit builder, TilePosition location) {
 			this.unitType = unitType;
@@ -45,6 +53,14 @@ public class Workers {
 		public void setLocation(TilePosition location) {
 			this.location = location;
 		}
+
+		public QueueStatus getStatus() {
+			return status;
+		}
+
+		public void setStatus(QueueStatus status) {
+			this.status = status;
+		}
 	}
 	
 	protected Workers(Player self, Game game) {
@@ -62,17 +78,43 @@ public class Workers {
 	
 	public void buildOrder() {
 		if (self.supplyTotal() == 20 && self.supplyUsed() == 18 && (self.minerals() >= 100)) {			
-			Unit freeWorker = getWorker();
-			TilePosition buildTile = getBuildTile(freeWorker, UnitType.Terran_Supply_Depot, self.getStartLocation());
+			build(UnitType.Terran_Supply_Depot);
+		}
+	}
+	
+	public Boolean build(UnitType unitType) {
+		Unit freeWorker = getWorker();
+		TilePosition buildTile = getBuildTile(freeWorker, unitType, self.getStartLocation());
+		
+		for (QueuedBuildingUnit queuedBuilding : buildingQueue) {
+			if (queuedBuilding.location.getX() == buildTile.getX() && queuedBuilding.location.getY() == buildTile.getY()) {
+				return false;
+			}
+		}
+		
+		if (freeWorker.build(unitType, buildTile)) {
+			buildingQueue.add(new QueuedBuildingUnit(unitType, freeWorker, buildTile));
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private void updateQueue() {
+		for (int i=0; i<buildingQueue.size(); i++) {
+			QueuedBuildingUnit queuedBuilding = buildingQueue.get(i);
 			
-			buildingQueue.add(new QueuedBuildingUnit(UnitType.Terran_Supply_Depot, freeWorker, buildTile));
+			if (queuedBuilding.getBuilder().getOrder() != Order.PlaceBuilding && queuedBuilding.getBuilder().getOrder() != Order.ConstructingBuilding) {
+				queuedBuilding.status = QueueStatus.DOING;
+				buildingQueue.set(i, queuedBuilding);
+			}
 		}
 	}
 	
 	// Return a mineral gathering worker that is not currently queued to build anything
 	private Unit getWorker() {
 		for (Unit myUnit : self.getUnits()) {
-			if (myUnit.getType() == UnitType.Terran_SCV && myUnit.isGatheringMinerals()) {
+			if (myUnit.getType() == UnitType.Terran_SCV && myUnit.isGatheringMinerals() && !myUnit.isCarryingMinerals() && !myUnit.isCarryingGas()) {
 				for (QueuedBuildingUnit queuedBuilding : buildingQueue) {
 					if (myUnit == queuedBuilding.getBuilder()) {
 						continue;
@@ -113,17 +155,6 @@ public class Workers {
 						}
 						if (!unitsInWay) {
 							return new TilePosition(i, j);
-						}
-						// creep for Zerg
-						if (buildingType.requiresCreep()) {
-							boolean creepMissing = false;
-							for (int k=i; k<=i+buildingType.tileWidth(); k++) {
-								for (int l=j; l<=j+buildingType.tileHeight(); l++) {
-									if (!this.game.hasCreep(k, l)) creepMissing = true;
-									break;
-								}
-							}
-							if (creepMissing) continue;
 						}
 					}
 				}
