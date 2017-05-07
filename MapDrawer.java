@@ -11,18 +11,32 @@ import bwta.BaseLocation;
 
 public class MapDrawer {
 
+	private static MapDrawer mapDrawer = null;
+	private static Game game = null;
 	
-	public static void drawRegions(Game game) {
+	protected MapDrawer(Game game) {
+		MapDrawer.game = game;
+	}
+	
+	public static MapDrawer getInstance(Game game) {
+		if (mapDrawer == null) {
+			mapDrawer = new MapDrawer(game);
+		}
+		
+		return mapDrawer;
+	}
+	
+	public void drawRegions() {
 		for(bwta.Region region : BWTA.getRegions()) {
         	List<Position> points = region.getPolygon().getPoints();
         	
         	for (int i = 0; i < points.size() - 1; i++) {
-        		game.drawLineMap(points.get(i).getX(), points.get(i).getY(), points.get(i + 1).getX(), points.get(i + 1).getY(), Color.Green);
+        		MapDrawer.game.drawLineMap(points.get(i).getX(), points.get(i).getY(), points.get(i + 1).getX(), points.get(i + 1).getY(), Color.Green);
         	}
         }
 	}
 	
-	public static void drawStartingBases(Game game) {
+	public void drawStartingBases() {
 		for(BaseLocation base : BWTA.getBaseLocations()) {
 			if (base.isStartLocation()) {
 				
@@ -34,7 +48,7 @@ public class MapDrawer {
 				Position leftTop = new Position(left, bottom);
 				Position rightBottom = new Position(right, top);
 				
-				game.drawBoxMap(leftTop, rightBottom, Color.Blue);			
+				MapDrawer.game.drawBoxMap(leftTop, rightBottom, Color.Blue);			
 			}
 		}
 	}
