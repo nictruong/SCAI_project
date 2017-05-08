@@ -1,9 +1,10 @@
-import java.awt.Point;
-import java.util.List;
-
-import bwapi.*;
+import bwapi.DefaultBWListener;
+import bwapi.Game;
+import bwapi.Mirror;
+import bwapi.Player;
+import bwapi.Unit;
+import bwapi.UnitType;
 import bwta.BWTA;
-import bwta.BaseLocation;
 
 public class TestBot1 extends DefaultBWListener {
 
@@ -51,8 +52,8 @@ public class TestBot1 extends DefaultBWListener {
 
         StringBuilder units = new StringBuilder("My units:\n");
         
-        Workers workers = Workers.getInstance(self, game);
-        workers.buildOrder();
+        WorkersManager workersManager = WorkersManager.getInstance(self, game);
+        workersManager.buildOrder();
 
         //iterate through my units
         for (Unit myUnit : self.getUnits()) {
@@ -83,6 +84,7 @@ public class TestBot1 extends DefaultBWListener {
             }            
         }
         
+        workersManager.updateQueue();
         
         // Draw the map features
         drawFeatures();

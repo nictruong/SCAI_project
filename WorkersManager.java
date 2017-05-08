@@ -7,78 +7,37 @@ import bwapi.Player;
 import bwapi.TilePosition;
 import bwapi.Unit;
 import bwapi.UnitType;
+import bwta.BWTA;
 
-public class Workers {
-	
-	private enum QueueStatus {
-		NOT_STARTED,
-		DOING,
-		COMPLETED,
-	}
-	
-	private static Workers workers = null;
+public class WorkersManager {
+		
+	private static WorkersManager workers = null;
 	
 	private Player self = null;
 	private Game game = null;
 	
 	private List<QueuedBuildingUnit> buildingQueue = new ArrayList<>();
 	
-	public class QueuedBuildingUnit {
-		private UnitType unitType;
-		private Unit builder;
-		private TilePosition location;
-		private QueueStatus status = QueueStatus.NOT_STARTED;
-		
-		public QueuedBuildingUnit(UnitType unitType, Unit builder, TilePosition location) {
-			this.unitType = unitType;
-			this.builder = builder;
-			this.location = location;
-		}
-		
-		public UnitType getUnitType() {
-			return unitType;
-		}
-		public void setUnitType(UnitType unitType) {
-			this.unitType = unitType;
-		}
-		public Unit getBuilder() {
-			return builder;
-		}
-		public void setBuilder(Unit builder) {
-			this.builder = builder;
-		}
-		public TilePosition getLocation() {
-			return location;
-		}
-		public void setLocation(TilePosition location) {
-			this.location = location;
-		}
-
-		public QueueStatus getStatus() {
-			return status;
-		}
-
-		public void setStatus(QueueStatus status) {
-			this.status = status;
-		}
-	}
-	
-	protected Workers(Player self, Game game) {
+	protected WorkersManager(Player self, Game game) {
 		this.self = self;
 		this.game = game;
 	}
 	
-	public static Workers getInstance(Player self, Game game) {
+	public static WorkersManager getInstance(Player self, Game game) {
 		if (workers == null) {
-			workers = new Workers(self, game);
+			workers = new WorkersManager(self, game);
 		}
 		
 		return workers;
 	}
 	
-	public void buildOrder() {
-		if (self.supplyTotal() == 20 && self.supplyUsed() == 18 && (self.minerals() >= 100)) {			
+	public void buildOrder() {		
+		if (self.supplyTotal() + getQueuedSupply() - self.supplyUsed() <= 4 && canAfford(UnitType.Terran_Supply_Depot)) {
 			build(UnitType.Terran_Supply_Depot);
+		}
+		
+		if (self.supplyUsed() == 22 && canAfford(UnitType.Terran_Barracks)) {
+			build(UnitType.Terran_Barracks);
 		}
 	}
 	
@@ -87,7 +46,7 @@ public class Workers {
 		TilePosition buildTile = getBuildTile(freeWorker, unitType, self.getStartLocation());
 		
 		for (QueuedBuildingUnit queuedBuilding : buildingQueue) {
-			if (queuedBuilding.location.getX() == buildTile.getX() && queuedBuilding.location.getY() == buildTile.getY()) {
+			if (queuedBuilding.getLocation().getX() == buildTile.getX() && queuedBuilding.getLocation().getY() == buildTile.getY()) {
 				return false;
 			}
 		}
@@ -100,15 +59,46 @@ public class Workers {
 		return false;
 	}
 	
-	private void updateQueue() {
+	public void updateQueue() {
 		for (int i=0; i<buildingQueue.size(); i++) {
 			QueuedBuildingUnit queuedBuilding = buildingQueue.get(i);
 			
-			if (queuedBuilding.getBuilder().getOrder() != Order.PlaceBuilding && queuedBuilding.getBuilder().getOrder() != Order.ConstructingBuilding) {
-				queuedBuilding.status = QueueStatus.DOING;
-				buildingQueue.set(i, queuedBuilding);
+			if (queuedBuilding.getBuilder().getOrder() == Order.ConstructingBuilding) {				
+				if (queuedBuilding.getStatus() == QueueStatus.NOT_STARTED && queuedBuilding.getUnitType() == UnitType.Terran_Supply_Depot) {
+					queuedBuilding.setStatus(QueueStatus.DOING);
+					buildingQueue.set(i, queuedBuilding);
+				}
+			}
+			
+			if (queuedBuilding.getUnitType() == UnitType.Terran_Supply_Depot) {
+				Unit myUnit;
+				for (Unit unit : game.getUnitsOnTile(queuedBuilding.getLocation())) {
+					if (unit.getType() == UnitType.Terran_Supply_Depot && unit.isCompleted()) {
+						buildingQueue.remove(i);
+						break;
+					}
+				}
 			}
 		}
+	}
+	
+	private Boolean canAfford(UnitType building) {
+		if (self.minerals() >= building.mineralPrice() && self.gas() >= building.gasPrice()) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	private int getQueuedSupply() {
+		int s = 0;
+		for (QueuedBuildingUnit building : buildingQueue) {
+			if (building.getUnitType() == UnitType.Terran_Supply_Depot) {
+				s += 16;
+			}
+		}
+		
+		return s;
 	}
 	
 	// Return a mineral gathering worker that is not currently queued to build anything
@@ -130,7 +120,7 @@ public class Workers {
 	
 	public TilePosition getBuildTile(Unit builder, UnitType buildingType, TilePosition aroundTile) {
 		TilePosition ret = null;
-		int maxDist = 3;
+		int maxDist = 2;
 		int stopDist = 40;
 
 		// Refinery, Assimilator, Extractor
