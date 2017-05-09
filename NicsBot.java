@@ -6,13 +6,17 @@ import bwapi.Unit;
 import bwapi.UnitType;
 import bwta.BWTA;
 
-public class TestBot1 extends DefaultBWListener {
+public class NicsBot extends DefaultBWListener {
 
     private Mirror mirror = new Mirror();
 
     private Game game;
 
     private Player self;
+    
+    private WorkersManager workersManager;
+    
+    private BuildingManager buildingManager;
 
     public void run() {
         mirror.getModule().setEventListener(this);
@@ -33,9 +37,12 @@ public class TestBot1 extends DefaultBWListener {
     public void onStart() {
         game = mirror.getGame();
         self = game.self();
+        workersManager = WorkersManager.getInstance(self, game);
+        buildingManager = BuildingManager.getInstance(self, game);
         
         // CHEATS
         game.sendText("black sheep wall");
+        game.setLocalSpeed(5);
 
         //Use BWTA to analyze map
         //This may take a few minutes if the map is processed first time!
@@ -52,10 +59,21 @@ public class TestBot1 extends DefaultBWListener {
 
         StringBuilder units = new StringBuilder("My units:\n");
         
-        WorkersManager workersManager = WorkersManager.getInstance(self, game);
-        workersManager.buildOrder();
+        // change the first condition to be scalable into late game
+        if (self.supplyTotal() + workersManager.getQueuedSupply() - self.supplyUsed() <= 4 && workersManager.canAfford(UnitType.Terran_Supply_Depot)) {
+			workersManager.addToQueue(UnitType.Terran_Supply_Depot);
+		}
+		
+		/*if (self.supplyUsed() == 22 && workersManager.canAfford(UnitType.Terran_Barracks)) {
+			workersManager.build(UnitType.Terran_Barracks);
+		}*/
+		
+		buildingManager.onFrame();
+		workersManager.onFrame();
 
         //iterate through my units
+		// TO BE CHANGED. IDLING WORKERS BEHAVIOUR TO BE MOVED TO WORKERSMANAGER
+		// TRAINING WORKERS TO BE MOVED TO BASEMANAGER
         for (Unit myUnit : self.getUnits()) {
             units.append(myUnit.getType()).append(" ").append(myUnit.getTilePosition()).append("\n");
 
@@ -84,14 +102,26 @@ public class TestBot1 extends DefaultBWListener {
             }            
         }
         
-        workersManager.updateQueue();
-        
         // Draw the map features
         drawFeatures();
         
 
         //draw my units on screen
         game.drawTextScreen(10, 25, units.toString());
+    }
+    
+    public void onUnitComplete(Unit unit) {
+    	// buildingManager contains a list of all my active production buildings
+    	if (unit.getType() == UnitType.Terran_Barracks) {
+    		buildingManager.addBuilding(unit);
+    	}
+    }
+    
+    public void onUnitDestroy(Unit unit) {
+    	// remove buildings from the manager if they got destroyed
+    	if (unit.getType() == UnitType.Terran_Barracks) {
+    		buildingManager.removeBuilding(unit);
+    	}
     }
     
     private void drawFeatures() {
@@ -101,6 +131,6 @@ public class TestBot1 extends DefaultBWListener {
     }
 
     public static void main(String[] args) {
-        new TestBot1().run();
+        new NicsBot().run();
     }
 }

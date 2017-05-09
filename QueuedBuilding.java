@@ -2,13 +2,13 @@ import bwapi.TilePosition;
 import bwapi.Unit;
 import bwapi.UnitType;
 
-public class QueuedBuildingUnit {
+public class QueuedBuilding {
 		private UnitType unitType;
 		private Unit builder;
 		private TilePosition location;
 		private QueueStatus status = QueueStatus.NOT_STARTED;
 		
-		public QueuedBuildingUnit(UnitType unitType, Unit builder, TilePosition location) {
+		public QueuedBuilding(UnitType unitType, Unit builder, TilePosition location) {
 			this.unitType = unitType;
 			this.builder = builder;
 			this.location = location;
