@@ -48,12 +48,26 @@ public class BuildingManager {
 		buildings.remove(unit);
 	}
 	
-	public int getBarrackCount() {
+	public int getBuildingCount(UnitType unitType) {
 		
 		int count = 0;
 		
 		for (Unit building : buildings) {
-			if (building.getType() == UnitType.Terran_Barracks) {
+			if (building.getType() == unitType) {
+				count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	public int getQueuedBuildingCount(UnitType unitType) {
+		WorkersManager workersManager = WorkersManager.getInstance(self, game);
+		
+		int count = 0;
+		
+		for (QueuedBuilding queuedBuilding : workersManager.getQueue()) {
+			if (queuedBuilding.getUnitType() == unitType) {
 				count++;
 			}
 		}

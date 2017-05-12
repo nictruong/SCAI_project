@@ -60,13 +60,13 @@ public class NicsBot extends DefaultBWListener {
         StringBuilder units = new StringBuilder("My units:\n");
         
         // change the first condition to be scalable into late game
-        if (self.supplyTotal() + workersManager.getQueuedSupply() - self.supplyUsed() <= 4 && workersManager.canAfford(UnitType.Terran_Supply_Depot)) {
+        if (self.supplyTotal() + workersManager.getQueuedSupply() - self.supplyUsed() <= 4) {
 			workersManager.addToQueue(UnitType.Terran_Supply_Depot);
 		}
 		
-		/*if (self.supplyUsed() == 22 && workersManager.canAfford(UnitType.Terran_Barracks)) {
-			workersManager.build(UnitType.Terran_Barracks);
-		}*/
+		if (self.supplyUsed() > 20 && (float)(buildingManager.getBuildingCount(UnitType.Terran_Barracks) + buildingManager.getQueuedBuildingCount(UnitType.Terran_Barracks)) / (float)workersManager.getWorkerCount() < 0.10) {
+			workersManager.addToQueue(UnitType.Terran_Barracks);
+		}
 		
 		buildingManager.onFrame();
 		workersManager.onFrame();

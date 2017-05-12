@@ -36,7 +36,7 @@ public class WorkersManager {
 			
 			QueuedBuilding queuedBuilding = buildingQueue.get(i);
 			
-			if (queuedBuilding.getBuilder() == null && queuedBuilding.getStatus() == QueueStatus.NOT_STARTED) {
+			if (queuedBuilding.getBuilder() == null && queuedBuilding.getStatus() == QueueStatus.NOT_STARTED && workers.canAfford(queuedBuilding.getUnitType())) {
 				Unit freeWorker = getWorker();				
 				TilePosition buildTile = getFreeTile(queuedBuilding.getUnitType(), freeWorker);
 				freeWorker.build(queuedBuilding.getUnitType(), buildTile);	
@@ -108,6 +108,10 @@ public class WorkersManager {
 		buildingQueue.add(new QueuedBuilding(unit, null, null));
 	}
 	
+	public List<QueuedBuilding> getQueue() {
+		return buildingQueue;
+	}
+	
 	// Return a mineral gathering worker that is not currently queued to build anything
 	private Unit getWorker() {
 		for (Unit myUnit : self.getUnits()) {
@@ -123,5 +127,17 @@ public class WorkersManager {
 		}
 		
 		return null;
+	}
+	
+	public int getWorkerCount() {
+		int count = 0;
+		
+		for (Unit unit : self.getUnits()) {
+			if (unit.getType() == UnitType.Terran_SCV) {
+				count++;
+			}
+		}
+		
+		return count;
 	}
 }
